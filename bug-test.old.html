@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Marauder's Audit | Ministry of Magic</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Jim+Nightshade&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --parchment: #f0e6d2;
+            --parchment-dark: #e6dcc0;
+            --ink: #2a1f1b;
+            --gryffindor-red: #740001;
+            --gryffindor-gold: #D3A625;
+            --slytherin-green: #1A472A;
+            --magic-glow: #e4d0ce;
+            --wax-red: #8a1c1c;
+        }
+
+        * { box-sizing: border-box; }
+        
+        body {
+            height: 100vh;
+            margin: 0;
+            font-family: 'Lato', sans-serif;
+            background-color: #111;
+            background-image: url('https://www.transparenttextures.com/patterns/dark-matter.png');
+            color: var(--parchment);
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('public/download (2).jpg');
+            background-size: cover;
+            background-position: center;
+            filter: blur(5px);
+            z-index: -1;
+            transform: scale(1.05);
+        }
+        
+
+        /* --- SIDEBAR (The Dark Arts / Ministry Style) --- */
+        #inspector-panel {
+            width: 380px;
+            background: linear-gradient(to bottom, #1a1a1a, #0f0f0f);
+            border-right: 4px double var(--gryffindor-gold);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 10px 0 50px rgba(0,0,0,0.8);
+            z-index: 10;
+            position: relative;
+        }
+
+        #inspector-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: url('https://www.transparenttextures.com/patterns/black-felt.png');
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .panel-section { margin-bottom: 24px; position: relative; z-index: 2; }
+        
+        .panel-title {
+            font-family: 'Cinzel Decorative', cursive;
+            font-size: 26px;
+            color: var(--gryffindor-gold);
+            margin-bottom: 16px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            border-bottom: 1px solid var(--gryffindor-red);
+            padding-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        
+        .meta-box {
+            background: rgba(20, 20, 20, 0.6);
+            border: 1px solid var(--gryffindor-gold);
+            padding: 12px;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        
+        .meta-box strong { 
+            display: block; 
+            color: var(--gryffindor-gold); 
+            font-family: 'Cinzel Decorative', cursive;
+            font-size: 16px;
+            margin-top: 4px;
+        }
+
+        #bug-feed {
+            flex: 1;
+            overflow-y: auto;
+            border-top: 2px solid var(--gryffindor-red);
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+
+        /* Scrollbar removed */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+
+        .audit-card {
+            background: #fdf6e3;
+            color: #2b2b2b;
+            padding: 16px;
+            border: 1px solid #d4c8b0;
+            border-radius: 2px;
+            margin-bottom: 16px;
+            position: relative;
+            box-shadow: 3px 3px 6px rgba(0,0,0,0.4);
+            font-family: 'Lato', sans-serif;
+            font-size: 16px;
+            transform: rotate(-1deg);
+            transition: transform 0.2s;
+        }
+        
+        .audit-card:nth-child(even) { transform: rotate(1deg); }
+        .audit-card:hover { transform: scale(1.02) rotate(0deg); z-index: 5; }
+
+        .audit-card .id {
+            font-family: 'Cinzel Decorative', cursive;
+            font-size: 10px;
+            color: var(--gryffindor-red);
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(0,0,0,0.2);
+            padding-bottom: 4px;
+            margin-bottom: 4px;
+        }
+
+        .delete-trigger {
+            position: absolute;
+            top: 5px; right: 8px;
+            color: var(--gryffindor-red);
+            cursor: pointer;
+            font-family: sans-serif;
+            font-weight: bold;
+        }
+
+        .audit-empty {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            padding: 40px 10px;
+            font-family: 'Lato', sans-serif;
+            font-size: 16px;
+        }
+
+        /* --- VIEWPORT / CANVAS --- */
+        #viewport {
+            flex: 1;
+            /* Background moved to ::before for blur effect */
+            position: relative;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" style="fill:none;stroke:%23d3a625;stroke-width:2"><path d="M2 22L14 10" /><path d="M10 14L2 22" /><path d="M14 10C14 10 16 8 18 6C20 4 22 2 22 2C22 2 20 4 18 6C16 8 14 10 14 10Z" /><path d="M18 6L22 2" /></svg>') 2 2, auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            overflow: auto;
+            z-index: 1; /* Ensure on top of ::before */
+        }
+
+        #viewport::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: url('public/download (2).jpg');
+            background-size: cover;
+            background-position: center;
+            filter: blur(8px);
+            z-index: -1;
+            transform: scale(1.05); /* Prevent blur bleed edges */
+        }
+
+        /* The "Map" Area */
+        #mock-interface {
+            width: 100%;
+            max-width: 1000px;
+            min-height: 700px;
+            background-color: var(--parchment);
+            background-image: url('https://www.transparenttextures.com/patterns/aged-paper.png');
+            box-shadow: 0 0 60px rgba(0,0,0,0.7);
+            border-radius: 4px; /* Slight rounding for worn corners */
+            position: relative;
+            color: var(--ink);
+            display: flex;
+            flex-direction: column;
+            border: 12px solid transparent;
+            border-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect x="0" y="0" width="100" height="100" fill="none" stroke="%23554433" stroke-width="4"/><circle cx="50" cy="50" r="20" fill="none" stroke="%23554433" stroke-width="2"/></svg>') 12 repeat;
+        }
+
+        .mock-header {
+            padding: 24px 36px;
+            border-bottom: 2px solid var(--ink);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.05), transparent);
+        }
+
+        .crest-container { display: flex; align-items: center; gap: 16px; }
+        .hogwarts-crest {
+            width: 60px; height: 60px;
+            background: var(--gryffindor-red);
+            clip-path: polygon(50% 0, 100% 20%, 100% 80%, 50% 100%, 0 80%, 0 20%);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gryffindor-gold);
+            font-size: 32px;
+            font-family: 'Cinzel Decorative', cursive;
+            border: 2px solid var(--gryffindor-gold);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .brand {
+            /* Intentionally causing overflow bug */
+            width: 250px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .brand h1 { margin: 0; font-size: 28px; font-family: 'Cinzel Decorative', cursive; letter-spacing: 2px; }
+        .brand p { margin: 0; font-size: 14px; font-style: italic; color: #554433; }
+
+        .dashboard-content { padding: 40px; display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+        
+        .magic-card {
+            border: 2px solid #554433;
+            padding: 20px;
+            background: rgba(255,255,255,0.4);
+            position: relative;
+        }
+        
+        .magic-card::before {
+            content: '✦';
+            position: absolute;
+            top: -12px; left: 50%; transform: translateX(-50%);
+            background: var(--parchment);
+            padding: 0 10px;
+            color: #554433;
+        }
+
+        .magic-card h2 { font-family: 'Cinzel Decorative'; margin-top: 0; font-size: 22px; border-bottom: 1px solid #aa9988; padding-bottom: 8px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; font-family: 'Cinzel Decorative'; font-weight: bold; border-bottom: 2px solid var(--ink); padding: 8px; }
+        td { padding: 12px 8px; border-bottom: 1px dashed #998877; font-family: 'Lato', sans-serif; font-size: 16px; }
+
+        .pill {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            font-family: 'Cinzel Decorative';
+            text-transform: uppercase;
+        }
+        .pill.active { background: rgba(26, 71, 42, 0.2); color: var(--slytherin-green); border: 1px solid var(--slytherin-green); }
+        .pill.error { background: rgba(140, 28, 28, 0.2); color: var(--wax-red); border: 1px solid var(--wax-red); }
+
+        /* --- CONTROLS --- */
+        #controls {
+            position: fixed; bottom: 30px; right: 40px;
+            display: flex; gap: 16px;
+            z-index: 100;
+        }
+
+        /* Magical Button Styling */
+        .magic-btn {
+            background: var(--gryffindor-red);
+            color: var(--gryffindor-gold);
+            border: 2px solid var(--gryffindor-gold);
+            padding: 12px 24px;
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .magic-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,215,0,0.4), transparent);
+            transition: 0.5s;
+        }
+
+        .magic-btn:hover::after { left: 100%; }
+        .magic-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(116, 0, 1, 0.6); text-shadow: 0 0 8px gold; }
+        .magic-btn.secondary { background: transparent; color: var(--gryffindor-gold); box-shadow: none; border: 2px solid rgba(211, 166, 37, 0.5); }
+        .magic-btn.secondary:hover { border-color: var(--gryffindor-gold); background: rgba(116, 0, 1, 0.2); }
+
+        /* --- PINS / MARKERS (Wax Seals) --- */
+        .pin {
+            position: absolute;
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: var(--wax-red);
+            box-shadow: 
+                inset 0 2px 5px rgba(255,255,255,0.2),
+                inset 0 -2px 5px rgba(0,0,0,0.4),
+                2px 2px 4px rgba(0,0,0,0.4);
+            color: rgba(255,255,255,0.9);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Cinzel Decorative';
+            font-weight: bold;
+            border: 3px solid rgba(138, 28, 28, 0.5); /* Rim of wax */
+            cursor: pointer;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+        }
+        .pin::before { content: ''; position: absolute; inset: 2px; border: 1px dashed rgba(0,0,0,0.2); border-radius: 50%; }
+        .pin:hover { transform: translate(-50%, -50%) scale(1.15); z-index: 25; }
+
+        /* --- MODAL (Scroll) --- */
+        #modal-wrap {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+            display: none; align-items: center; justify-content: center; z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-scroll {
+            width: 500px;
+            background: var(--parchment);
+            background-image: url('https://www.transparenttextures.com/patterns/aged-paper.png');
+            padding: 40px 60px;
+            border-radius: 2px;
+            box-shadow: 0 0 40px rgba(0,0,0,0.9);
+            position: relative;
+            text-align: center;
+        }
+
+        /* Scroll handles */
+        .modal-scroll::before, .modal-scroll::after {
+            content: '';
+            position: absolute;
+            left: 20px; right: 20px;
+            height: 24px;
+            background: linear-gradient(90deg, #5e4b35, #8c7051, #5e4b35);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+        }
+        .modal-scroll::before { top: -12px; }
+        .modal-scroll::after { bottom: -12px; }
+
+input[type="text"], select {
+            width: 100%;
+            background: rgba(0,0,0,0.05);
+            border: none;
+            border-bottom: 2px solid var(--ink);
+            font-family: 'Lato', sans-serif;
+            font-size: 16px;
+            padding: 10px;
+            color: var(--ink);
+            outline: none;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            width: 100%; height: 100px;
+            background: rgba(0,0,0,0.05);
+            border: none;
+            border-bottom: 2px solid var(--ink);
+            font-family: 'Lato', sans-serif;
+            font-size: 18px;
+            padding: 10px;
+            color: var(--ink);
+            outline: none;
+            resize: none;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* PARTICLES */
+        .sparkle {
+            position: absolute; 
+            width: 4px; height: 4px; 
+            background: #fff; 
+            border-radius: 50%;
+            pointer-events: none;
+            box-shadow: 0 0 10px #fff, 0 0 20px gold;
+            animation: fadeOut 1s forwards;
+        }
+
+        @keyframes fadeOut { to { opacity: 0; transform: scale(0); } }
+
+        /* --- LUMOS / FLASHLIGHT MODE --- */
+        #lumos-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.92);
+            z-index: 5;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            /* The 'light' is created by a mask or gradient */
+            background: radial-gradient(circle 150px at var(--x, 50%) var(--y, 50%), transparent 0%, rgba(0,0,0,0.95) 100%);
+        }
+
+        #lumos-overlay.active {
+            opacity: 1;
+        }
+
+        /* HIDDEN RUBBISH (Bugs to find) */
+        .hidden-pest {
+            position: absolute;
+            width: 24px; height: 24px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234a6fa5"><path d="M12 2L14 8L20 8L16 12L18 18L12 14L6 18L8 12L4 8L10 8Z" /></svg>'); /* Simple star/shape */
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 6;
+            filter: drop-shadow(0 0 5px #fff);
+            animation: jitter 0.2s infinite;
+        }
+        /* Only visible when light is near? We'll simulate by just showing them random places */
+        
+        @keyframes jitter { 0% { transform: translate(0,0); } 25% { transform: translate(1px, 1px); } 50% { transform: translate(-1px, 0); } 75% { transform: translate(0, -1px); } }
+
+        /* Flying Brooms - Ambient Background */
+        .flying-broom {
+            position: fixed;
+            left: -300px;
+            width: 300px;
+            height: 150px;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0.8;
+            --s: 1; /* Scale variable */
+        }
+
+        /* 
+           Fly across roughly 8% of the total duration time.
+           This creates long pauses between flights.
+        */
+        @keyframes flyRarely {
+            0% { left: -300px; transform: translateY(0) rotate(5deg) scale(var(--s)); }
+            2% { transform: translateY(-30px) rotate(0deg) scale(var(--s)); }
+            4% { transform: translateY(20px) rotate(-5deg) scale(var(--s)); }
+            6% { transform: translateY(-20px) rotate(5deg) scale(var(--s)); }
+            8% { left: 120vw; transform: translateY(0) rotate(0deg) scale(var(--s)); } 
+            100% { left: 120vw; transform: scale(var(--s)); }
+        }
+
+        #broom-1 { top: 15%; animation: flyRarely 42s linear infinite; --s: 0.8; }
+        #broom-2 { top: 75%; animation: flyRarely 67s linear infinite; animation-delay: 15s; --s: 0.5; opacity: 0.6; }
+        #broom-3 { top: 45%; animation: flyRarely 53s linear infinite; animation-delay: 5s; --s: 0.3; opacity: 0.4; }
+
+        /* --- RATING SELECTOR (Wizard Scales) --- */
+        .rating-group {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .rating-opt {
+            cursor: pointer;
+            opacity: 0.5;
+            transition: 0.3s;
+            text-align: center;
+        }
+        
+        .rating-opt:hover, .rating-opt.selected { opacity: 1; transform: scale(1.1); }
+        .rating-opt img { width: 32px; height: 32px; display: block; margin: 0 auto; }
+        .rating-opt span { font-size: 12px; font-family: 'Cinzel Decorative'; color: var(--gryffindor-gold); }
+
+        /* --- RATING SELECTOR (Wizard Scales) --- */
+        .rating-group {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .rating-opt {
+            cursor: pointer;
+            opacity: 0.5;
+            transition: 0.3s;
+            text-align: center;
+        }
+        
+        .rating-opt:hover, .rating-opt.selected { opacity: 1; transform: scale(1.1); }
+        .rating-opt img { width: 32px; height: 32px; display: block; margin: 0 auto; }
+        .rating-opt span { font-size: 12px; font-family: 'Cinzel Decorative'; color: var(--gryffindor-gold); }
+
+        /* GLITCHY BUG CIRCLES */
+        .bug-circle {
+            position: absolute;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            border: 2px dashed var(--gryffindor-red);
+            background: rgba(116, 0, 1, 0.1);
+            cursor: pointer;
+            z-index: 100;
+            animation: glitch-anim 3s infinite;
+        }
+
+        .bug-circle::after {
+            content: '!';
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            color: var(--gryffindor-red);
+            font-family: 'Cinzel Decorative';
+        }
+        
+        .bug-circle:hover {
+            background: rgba(116, 0, 1, 0.3);
+            border-style: solid;
+        }
+
+        @keyframes glitch-anim {
+            0% { transform: translate(0,0) scale(1); opacity: 0.6; }
+            10% { transform: translate(-2px, 2px) scale(0.9); opacity: 0.8;}
+            20% { transform: translate(2px, -2px) scale(1.1); opacity: 0.4;}
+            30% { transform: translate(0,0) scale(1.05); }
+            90% { transform: translate(0,0) scale(1); opacity: 0.6; }
+            92% { transform: translate(1px, 1px) scale(1); opacity: 1; border-color: red;}
+            94% { transform: translate(-1px, -1px) scale(1); opacity: 0.2;}
+            100% { transform: translate(0,0) scale(1); opacity: 0.6; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside id="inspector-panel">
+        <div style="text-align: center; ">
+            <img src="public/runtime-terror.png" alt="Runtime Terror" style="width: 200%; max-width: 350px; ">
+            <div id="sidebar-wizard-name" style="font-family: 'Cinzel Decorative', cursive; color: var(--gryffindor-gold); font-size: 30px; margin-bottom: 10px; text-shadow: 0 2px 4px rgba(0,0,0,0.8);"></div>
+        </div>
+        <div class="panel-section">
+            <div id="time-meta" style="font-size: 56px; line-height: 1.2; text-align: center; font-family: 'Cinzel Decorative', cursive; color: var(--gryffindor-gold); text-shadow: 0 0 20px rgba(211, 166, 37, 0.4); margin: 20px 0; border: 2px solid var(--gryffindor-red); padding: 20px; border-radius: 8px; background: rgba(0,0,0,0.5);">--:--</div>
+            <div id="status-meta" style="display:none;"></div>
+        </div>
+
+        <div class="panel-section" style="flex: 1; display: flex; flex-direction: column;">
+            <div class="panel-title" style="font-size: 20px; border:none;">Bug Report Log</div>
+            <div id="bug-feed">
+                <div class="audit-empty">The parchment is blank... for now.</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- VIEWPORT -->
+    <main id="viewport">
+        <div id="mock-interface">
+            <!-- Header -->
+            <header class="mock-header">
+                <div class="crest-container">
+                    <div style="display:flex; flex-direction:column; align-items:center;">
+                        <div class="hogwarts-crest">H</div>
+                        <div id="wizard-name-display" style="font-family:'Cinzel Decorative'; font-size:12px; font-weight:bold; margin-top:5px; color:var(--ink);"></div>
+                    </div>
+                    <div class="brand">
+                        <h1>Marauder's Q<span style="letter-spacing: 5px;">A</span> Tool V.1</h1>
+                        <p>Messrs Frontend, Backend, DevOps, and PM</p>
+                    </div>
+                </div>
+                <div style="font-family: 'Cinzel Decorative'; font-weight: bold; font-size: 18px;">
+                    Users manage mischief
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="dashboard-content" id="events-dashboard">
+                <style>
+                    .event-card {
+                        background: rgba(255,255,255,0.6);
+                        border: 1px solid var(--ink);
+                        padding: 15px;
+                        border-radius: 4px;
+                        font-family: 'Crimson Text', serif;
+                        position: relative;
+                    }
+                    .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+                    .seats-count { font-weight: bold; }
+                    .register-btn {
+                        background: var(--gryffindor-red);
+                        color: #fff;
+                        border: none;
+                        padding: 8px 16px;
+                        cursor: pointer;
+                        font-family: 'Lato', sans-serif;
+                        font-weight: bold;
+                    }
+                    .register-btn:disabled { background: #888; cursor: not-allowed; }
+                </style>
+
+                <!-- Potions Class -->
+                <div class="event-card">
+                    <h3>Potions Masterclass (#101)</h3>
+                    <div class="info-row"><span>Seats:</span> <span class="seats-count" id="seat-101">12/20</span></div>
+                    <button class="register-btn" onclick="registerEvent(101)">Register</button>
+                    <div id="msg-101" style="margin-top:5px; font-weight:bold; color: var(--slytherin-green);"></div>
+                </div>
+
+                <!-- DADA Class -->
+                <div class="event-card">
+                    <h3>Defense Against Dark Arts (#102)</h3>
+                    <div class="info-row"><span>Seats:</span> <span class="seats-count" style="color:red">30/30 (FULL)</span></div>
+                    <button class="register-btn" onclick="registerEvent(102)">Register</button> 
+                    <div id="msg-102" style="margin-top:5px; font-weight:bold; color: var(--slytherin-green);"></div>
+                </div>
+
+                <!-- CoMC -->
+                <div class="event-card" style="grid-column: span 2;">
+                    <h3>Care of Magical Creatures (#103)</h3>
+                    <p>Registration Deadline: <strong>Yesterday</strong></p>
+                    <form onsubmit="event.preventDefault(); registerCustom('103')">
+                        <input type="text" placeholder="Wizard Name" style="padding: 5px; width: 60%;" id="name-103">
+                        <button class="register-btn">Quick Register</button>
+                    </form>
+                    <div id="msg-103" style="margin-top:5px; font-weight:bold;"></div>
+                </div>
+
+                <!-- Charms Club -->
+                <div class="event-card">
+                    <h3>Charms Club (#104)</h3>
+                    <div class="info-row"><span>Your Status:</span> <span id="status-104">Not Registered</span></div>
+                    <button class="register-btn" onclick="registerEvent(104)">Join Club</button>
+                </div>
+                
+                <!-- Transfiguration -->
+                <div class="event-card">
+                    <h3>Transfiguration Workshop (#105)</h3>
+                    <div class="info-row"><span>Seats:</span> <span class="seats-count" id="seat-105-a">5/10</span></div> 
+                    <button class="register-btn" onclick="checkDetails(105)">View Details</button>
+                    
+                    <!-- Hidden Modal for Details -->
+                    <div id="detail-105" style="display:none; position:absolute; top: 100%; left:0; width:100%; height:auto; background:#fff; border:1px solid #000; padding:10px; z-index:20;">
+                         <h4>Course Details</h4>
+                         <p>Instructor: Minerva McGonagall</p>
+                         <p>Current Enrollment: 17/10</p>
+                         <button style="font-size:10px;" onclick="document.getElementById('detail-105').style.display='none'">Close</button>
+                    </div>
+                </div>
+
+                 <!-- Flying Lessons -->
+                 <div class="event-card">
+                    <h3>Flying Lessons (#106)</h3>
+                    <form action="javascript:void(0)" onsubmit="submitFlying()">
+                        <button class="register-btn">Submit Waiver</button>
+                    </form>
+                    <div id="flying-msg" style="margin-top:5px; font-style:italic;"></div>
+                 </div>
+
+                 <!-- Triwizard Tournament -->
+                 <div class="event-card" style="grid-column: span 2">
+                     <h3>Triwizard Tournament Viewer (#107)</h3>
+                     <div class="info-row" style="border-bottom: 2px solid var(--parchment-dark);">
+                         <a href="#" onclick="mockNav('tab1'); return false;" style="margin-right:15px; font-weight:bold; color:var(--ink); text-decoration:none;">Overview</a>
+                         <a href="#" onclick="mockNav('tab2'); return false;" style="color:var(--ink); text-decoration:none;">Tickets (VIP)</a>
+                     </div>
+                     <div id="nav-content" style="margin-top:10px; min-height: 50px;">
+                         <p>Welcome to the 422nd Quidditch World Cup... err, Triwizard Tournament viewing party.</p>
+                         <button class="register-btn" onclick="buyTicket()" style="margin-top:5px;">Buy VIP Ticket</button>
+                         <div id="ticket-msg" style="margin-top:5px; font-weight:bold;"></div>
+                     </div>
+                 </div>
+
+            </div>
+            
+            <script>
+                function registerEvent(id) {
+                    if(id == 101) {
+                         // Potions: Says success, but seat count (12/20) won't change
+                         document.getElementById('msg-101').innerText = "Registration Confirmed!";
+                    }
+                    if(id == 102) {
+                        // DADA: Full, but allows registration anyway
+                        document.getElementById('msg-102').innerText = "Registration Confirmed!";
+                    }
+                    if(id == 104) {
+                        // Charms: Allows duplicate registration statuses
+                        const st = document.getElementById('status-104');
+                        if (st.innerText === "Not Registered") {
+                            st.innerText = "Registered";
+                            st.style.color = "green";
+                        } else {
+                            // Subtle bug: Appends status instead of checking existing
+                            st.innerText += ", Registered";
+                        }
+                    }
+                }
+
+                function registerCustom(id) {
+                    // CoMC: Accepts empty name, accepts past deadline
+                    const val = document.getElementById('name-'+id).value;
+                    const msg = document.getElementById('msg-103');
+                    
+                    // No validation check for empty string or date
+                    msg.style.color = "var(--slytherin-green)";
+                    msg.innerText = "Success! " + (val ? val : "Wizard") + " has been added to the list.";
+                }
+
+                function checkDetails(id) {
+                    // Transfiguration: Details view shows 17/10 vs 5/10 on card
+                    document.getElementById('detail-'+id).style.display='block';
+                }
+
+                function submitFlying() {
+                    // Flying: Submission works, shows message. Logic for duplicate on refresh is browser default behavior for forms without PRG pattern, simulated by plain alert
+                    const d = new Date();
+                    document.getElementById('flying-msg').innerText = "Waiver Submitted at " + d.toLocaleTimeString();
+                    // In a real app we'd reload to show the "resubmission" warning, here we just let it sit
+                }
+
+                function mockNav(tab) {
+                    // Triwizard: State loss
+                    const content = document.getElementById('nav-content');
+                    if(tab === 'tab1') {
+                        content.innerHTML = '<p>Welcome to the 422nd Quidditch World Cup... err, Triwizard Tournament viewing party.</p><button class="register-btn" onclick="buyTicket()" style="margin-top:5px;">Buy VIP Ticket</button><div id="ticket-msg" style="margin-top:5px; font-weight:bold;"></div>';
+                    } else {
+                        // Bug: Switching tabs purely via JS innerHTML replacement destroys the "Buy Ticket" button state or logic if it was complex, here it just shows empty ticket section
+                         content.innerHTML = '<p>VIP Tickets: Sold Out (Check back later)</p>';
+                    }
+                }
+
+                function buyTicket() {
+                    // Triwizard: Error message for success
+                    const el = document.getElementById('ticket-msg');
+                    el.style.color = "red"; // Error color
+                    el.innerText = "Error: Ticket purchase successful (200 OK)";
+                }
+            </script>
+
+
+            
+            <div id="click-overlay" style="position:absolute; inset:0; z-index: 10; cursor: url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'32\' height=\'32\'><circle cx=\'16\' cy=\'16\' r=\'14\' fill=\'none\' stroke=\'%23d3a625\' stroke-width=\'2\'/></svg>') 16 16, crosshair; display: none;"></div>
+            <!-- Lumos Removed -->
+        </div>
+
+        <!-- Float Controls -->
+        <div id="controls">
+            <button class="magic-btn secondary" onclick="hardReset()">Obliviate (Reset)</button>
+            <button id="toggle-btn" class="magic-btn" onclick="toggleInspector()">Reveal Secrets</button>
+            <button class="magic-btn secondary" onclick="exportData()">Export Scroll</button>
+        </div>
+    </main>
+
+    <!-- ADMIN MODAL -->
+    <div id="admin-wrap" style="position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 2005;">
+        <div class="modal-scroll" style="text-align: left; width: 600px;">
+            <h2 style="font-family: 'Cinzel Decorative'; color: #3e2723; margin-top: 0; text-align: center;">Headmaster's Decree</h2>
+            <p style="font-family: 'Crimson Text'; font-style: italic; text-align: center; margin: 0 0 10px;">"Rewrite reality within the bounds of the Parchment"</p>
+            
+            <textarea id="admin-html-input" placeholder="Enter raw HTML for the dashboard area..." style="font-family: monospace; font-size: 14px; height: 300px; white-space: pre;"></textarea>
+            
+            <div style="display:flex; gap: 12px; justify-content: center; margin-top: 20px;">
+                <button class="magic-btn" onclick="saveAdminLayout()">Cast Change (Save)</button>
+                <button class="magic-btn secondary" onclick="document.getElementById('admin-wrap').style.display='none'" style="border-color: #5e4b35; color: #5e4b35;">Close</button>
+                <button class="magic-btn secondary" onclick="resetAdminLayout()" style="border-color: #740001; color: #740001;">Reset to Default</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="modal-wrap">
+        <div class="modal-scroll" style="text-align: left;">
+            <h2 style="font-family: 'Cinzel Decorative'; color: #3e2723; margin-top: 0; text-align: center;">Log Magical Glitch</h2>
+            
+            <input type="text" id="bug-title" placeholder="Summary of the Curse (Title)">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <select id="bug-component">
+                    <option value="" disabled selected>Select Affected Area...</option>
+                    <option value="Frontend">Frontend Interface</option>
+                    <option value="Backend">Potions (Backend)</option>
+                    <option value="Database">Archives (Database)</option>
+                    <option value="Spellbook">Spellbook (API)</option>
+                </select>
+                <select id="bug-reporter">
+                    <option value="" disabled selected>Reported By...</option>
+                    <option value="Harry Potter">Harry Potter</option>
+                    <option value="Hermione Granger">Hermione Granger</option>
+                    <option value="Ron Weasley">Ron Weasley</option>
+                    <option value="Draco Malfoy">Draco Malfoy</option>
+                </select>
+            </div>
+
+            <p style="font-family: 'Crimson Text'; font-style: italic; text-align: center; margin: 10px 0;">Severity Level</p>
+            <div class="rating-group" id="rating-ui">
+                <div class="rating-opt" onclick="selectRating(1, this)" data-val="1">
+                    <div style="font-size: 24px;">🔮</div>
+                    <span>Trivial</span>
+                </div>
+                <div class="rating-opt" onclick="selectRating(2, this)" data-val="2">
+                    <div style="font-size: 24px;">⚡</div>
+                    <span>Minor</span>
+                </div>
+                <div class="rating-opt" onclick="selectRating(3, this)" data-val="3">
+                    <div style="font-size: 24px;">💀</div>
+                    <span>Major</span>
+                </div>
+                <div class="rating-opt" onclick="selectRating(4, this)" data-val="4">
+                    <div style="font-size: 24px;">👹</div>
+                    <span>Critical</span>
+                </div>
+            </div>
+
+            <textarea id="obs-input" placeholder="Detailed description of the anomaly..."></textarea>
+            
+            <div style="display:flex; gap: 12px; justify-content: center;">
+                <button class="magic-btn" onclick="saveObservation()">Log Bug</button>
+                <button class="magic-btn secondary" onclick="closeModal()" style="border-color: #5e4b35; color: #5e4b35;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let isInspecting = false;
+        let observations = JSON.parse(localStorage.getItem('hp_observations') || '[]');
+        let currentPos = {x:0, y:0};
+        let currentRating = 1;
+
+        // Elements
+        const overlay = document.getElementById('click-overlay');
+        // lumos removed
+        const modal = document.getElementById('modal-wrap');
+        const feed = document.getElementById('bug-feed');
+        const statusMeta = document.getElementById('status-meta');
+        const toggleBtn = document.getElementById('toggle-btn');
+        const timeMeta = document.getElementById('time-meta');
+
+        // Mouse tracking for Lumos REMOVED
+
+        // Clock - Ministry Time
+        setInterval(() => {
+            const now = new Date();
+            timeMeta.innerText = now.toLocaleTimeString('en-US', {hour12: false});
+        }, 1000);
+
+        // Toggle Inspection Mode
+        function toggleInspector() {
+            isInspecting = !isInspecting;
+            if (isInspecting) {
+                overlay.style.display = 'block';
+                toggleBtn.innerText = 'Nox (Finish)';
+                toggleBtn.classList.add('active');
+                statusMeta.innerText = "Active";
+                statusMeta.style.color = "#fff";
+                statusMeta.style.textShadow = "0 0 10px #fff";
+            } else {
+                overlay.style.display = 'none';
+                toggleBtn.innerText = 'Reveal Secrets';
+                toggleBtn.classList.remove('active');
+                statusMeta.innerText = "Sheathed";
+                statusMeta.style.color = "var(--gryffindor-gold)";
+                statusMeta.style.textShadow = "none";
+                document.body.style.cursor = "default";
+            }
+        }
+
+        // Handle Click on Overlay
+        overlay.addEventListener('click', (e) => {
+            const rect = e.target.getBoundingClientRect();
+            currentPos.x = e.clientX - rect.left;
+            currentPos.y = e.clientY - rect.top;
+            
+            // Open Modal Immediately
+            isInspecting = false;
+            overlay.style.display = 'none';
+            modal.style.display = 'flex';
+            // Reset Rating
+            selectRating(1, document.querySelector('.rating-opt[data-val="1"]'));
+            document.getElementById('obs-input').focus();
+        });
+
+        function closeModal() {
+            modal.style.display = 'none';
+            document.getElementById('obs-input').value = '';
+            document.getElementById('bug-title').value = '';
+            document.getElementById('bug-component').value = '';
+            document.getElementById('bug-reporter').value = '';
+            
+            // Resume Inspection mode
+            isInspecting = true;
+            overlay.style.display = 'block';
+            
+            toggleBtn.innerText = 'Nox (Finish)';
+            statusMeta.innerText = "Active";
+        }
+
+        // Rating System
+        function selectRating(val, el) {
+            currentRating = val;
+            document.querySelectorAll('.rating-opt').forEach(opt => opt.classList.remove('selected'));
+            el.classList.add('selected');
+        }
+
+        function saveObservation() {
+            const txt = document.getElementById('obs-input').value;
+            const title = document.getElementById('bug-title').value;
+            const component = document.getElementById('bug-component').value || 'Unknown';
+            const reporter = document.getElementById('bug-reporter').value || 'Anonymous';
+            
+            if(!txt || !title) {
+                alert("Please provide at least a title and description.");
+                return;
+            }
+
+            const newObs = {
+                id: Date.now(),
+                x: currentPos.x,
+                y: currentPos.y,
+                title: title,
+                text: txt,
+                component: component,
+                reporter: reporter,
+                rating: parseInt(currentRating)
+            };
+            
+            observations.push(newObs);
+            localStorage.setItem('hp_observations', JSON.stringify(observations));
+            
+            render();
+            closeModal();
+            createSparkle(window.innerWidth/2, window.innerHeight/2);
+        }
+
+        function deleteObs(id) {
+            observations = observations.filter(o => o.id !== id);
+            localStorage.setItem('hp_observations', JSON.stringify(observations));
+            render();
+        }
+
+        function render() {
+            // Update Feed
+            feed.innerHTML = '';
+            if(observations.length === 0) {
+                feed.innerHTML = '<div class="audit-empty">The parchment is blank... for now.</div>';
+            } else {
+                [...observations].reverse().forEach(obs => {
+                    const card = document.createElement('div');
+                    card.className = 'audit-card';
+                    
+                    let severityLabel = 'Trivial';
+                    let severityColor = '#ecb939';
+                    if(obs.rating == 2) { severityLabel='Minor'; severityColor='#0e1a40'; }
+                    if(obs.rating == 3) { severityLabel='Major'; severityColor='#1a472a'; }
+                    if(obs.rating == 4) { severityLabel='Critical'; severityColor='#740001'; }
+
+                    card.innerHTML = `
+                        <div class="delete-trigger" onclick="deleteObs(${obs.id})">×</div>
+                        
+                        <div style="font-family:'Cinzel Decorative'; font-weight:bold; color:var(--gryffindor-red); margin-bottom:8px; font-size:16px;">
+                            ${obs.title || 'Untitled Curse'}
+                        </div>
+                        
+                        <div style="font-size:12px; color:#666; margin-bottom:12px; display:flex; gap:10px; border-bottom:1px solid #ddd; padding-bottom:8px;">
+                            <span>⏱ ${new Date(obs.id).toLocaleTimeString()}</span>
+                            <span>👤 ${obs.reporter || 'Anon'}</span>
+                            <span>🏗 ${obs.component}</span>
+                        </div>
+
+                        <div style="font-weight:bold; color:${severityColor}; margin-bottom:4px; font-size:14px;">${severityLabel} Severity</div>
+                        <div style="font-size:15px; line-height:1.4;">${obs.text}</div>
+                    `;
+                    feed.appendChild(card);
+                });
+            }
+
+            // Update Map Pins
+            // Remove old pins via class
+            document.querySelectorAll('.pin').forEach(p => p.remove());
+            
+            observations.forEach(obs => {
+                const pin = document.createElement('div');
+                pin.className = 'pin';
+                pin.style.left = obs.x + 'px';
+                pin.style.top = obs.y + 'px';
+                
+                let grade = '🔮';
+                let color = 'var(--wax-red)';
+                if(obs.rating == 1) { grade='🔮'; color='#ecb939'; }
+                if(obs.rating == 2) { grade='⚡'; color='#0e1a40'; }
+                if(obs.rating == 3) { grade='💀'; color='#1a472a'; }
+                if(obs.rating == 4) { grade='👹'; color='#740001'; }
+
+                pin.style.backgroundColor = color;
+                pin.style.borderColor = color;
+                pin.innerText = grade;
+                pin.title = obs.text;
+                
+                pin.onclick = (e) => {
+                    e.stopPropagation();
+                    alert(`[${grade}] ${obs.text}`);
+                };
+
+                document.getElementById('mock-interface').appendChild(pin);
+            });
+        }
+
+        function createSparkle(x, y) {
+            const el = document.createElement('div');
+            el.className = 'sparkle';
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 1000);
+        }
+
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(observations));
+            const a = document.createElement('a');
+            a.href = dataStr;
+            a.download = "marauders_map_log.json";
+            a.click();
+        }
+
+        // Admin System
+        function toggleAdmin() {
+            const adminWrap = document.getElementById('admin-wrap');
+            if(adminWrap) {
+                adminWrap.style.display = 'flex';
+                // Load current layout or default
+                const current = localStorage.getItem('hp_layout_html');
+                const adminInput = document.getElementById('admin-html-input');
+                if(current) {
+                    adminInput.value = current;
+                } else {
+                    const content = document.querySelector('.dashboard-content');
+                    if(content) adminInput.value = content.innerHTML.trim();
+                }
+            } else {
+                console.error("Admin modal missing!");
+            }
+        }
+
+        function saveAdminLayout() {
+            const html = document.getElementById('admin-html-input').value;
+            localStorage.setItem('hp_layout_html', html);
+            loadLayout();
+            document.getElementById('admin-wrap').style.display = 'none';
+            alert("Reality has been altered.");
+        }
+
+        function resetAdminLayout() {
+            if(confirm("Are you sure you want to revert to the original timeline?")) {
+                localStorage.removeItem('hp_layout_html');
+                location.reload();
+            }
+        }
+
+        function hardReset() {
+             if(confirm("Obliviate? This will erase all memory (observations and layout changes).")) {
+                localStorage.removeItem('hp_layout_html');
+                localStorage.removeItem('hp_observations');
+                location.reload();
+            }
+        }
+
+        function loadLayout() {
+            const raw = localStorage.getItem('hp_layout_html');
+            if(raw) {
+                const container = document.querySelector('.dashboard-content');
+                if(container) {
+                    container.innerHTML = raw;
+                }
+            }
+        }
+
+        // Global Shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl+Shift+Q to toggle Admin (The "Q" for "Q.A.")
+            if(e.ctrlKey && e.shiftKey && (e.key === 'Q' || e.key === 'q')) {
+                toggleAdmin();
+            }
+        });
+
+        // Initialize Wizard Name from Login
+        const storedName = localStorage.getItem('wizardName');
+        if (storedName) {
+            const headerName = document.getElementById('wizard-name-display');
+            if(headerName) headerName.innerText = storedName;
+
+            const sidebarName = document.getElementById('sidebar-wizard-name');
+            if(sidebarName) sidebarName.innerText = storedName;
+        }
+
+        // Init
+        loadLayout(); // Check for admin overrides
+        render();
+
+    </script>
+    
+    <!-- Easter Egg: Flying Brooms -->
+    <!-- Reusable Broom Graphic Internal -->
+    <svg style="display: none;">
+        <symbol id="broom-symbol" viewBox="0 0 200 100">
+            <filter id="broom-glow">
+                <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+                <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+            </filter>
+            <g transform="rotate(-10 100 50)">
+                 <!-- Handle -->
+                <path d="M190 40 L60 70" stroke="#5D4037" stroke-width="6" stroke-linecap="round"/>
+                <!-- Bristles -->
+                <path d="M60 70 Q 50 55 30 60 Q 10 65 20 85 Q 40 90 60 70 Z" fill="#8D6E63" />
+                 <!-- Bristle Details -->
+                <path d="M60 70 L 25 65" stroke="#4E342E" stroke-width="1" />
+                <path d="M58 72 L 28 80" stroke="#4E342E" stroke-width="1" />
+                <!-- Binding -->
+                <rect x="58" y="65" width="6" height="10" transform="rotate(-13 61 70)" fill="#D4AF37" filter="url(#broom-glow)" />
+            </g>
+        </symbol>
+    </svg>
+
+    <div id="broom-1" class="flying-broom"><svg viewBox="0 0 200 100"><use href="#broom-symbol"/></svg></div>
+    <div id="broom-2" class="flying-broom"><svg viewBox="0 0 200 100"><use href="#broom-symbol"/></svg></div>
+    <div id="broom-3" class="flying-broom"><svg viewBox="0 0 200 100"><use href="#broom-symbol"/></svg></div>
+</body>
+</html>

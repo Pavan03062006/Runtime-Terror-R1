@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Login | Marauder's Audit</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Jim+Nightshade&family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --parchment: #f0e6d2;
+            --parchment-dark: #e6dcc0;
+            --ink: #2a1f1b;
+            --gryffindor-red: #740001;
+            --gryffindor-gold: #D3A625;
+            --slytherin-green: #1A472A;
+            --magic-glow: #e4d0ce;
+            --wax-red: #8a1c1c;
+        }
+
+        * { box-sizing: border-box; }
+        
+        body {
+            height: 100vh;
+            margin: 0;
+            font-family: 'Lato', sans-serif;
+            color: var(--parchment);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('public/download (2).jpg');
+            background-size: cover;
+            background-position: center;
+            filter: blur(5px);
+            z-index: -1;
+            transform: scale(1.05);
+        }
+
+        .login-container {
+            width: 400px;
+            background-color: var(--parchment);
+            background-image: url('https://www.transparenttextures.com/patterns/aged-paper.png');
+            box-shadow: 0 0 60px rgba(0,0,0,0.7);
+            border-radius: 4px;
+            padding: 40px;
+            color: var(--ink);
+            position: relative;
+            border: 8px solid transparent;
+            border-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect x="0" y="0" width="100" height="100" fill="none" stroke="%23554433" stroke-width="4"/><circle cx="50" cy="50" r="20" fill="none" stroke="%23554433" stroke-width="2"/></svg>') 12 repeat;
+            text-align: center;
+        }
+
+        .login-title {
+            font-family: 'Cinzel Decorative', cursive;
+            font-size: 32px;
+            color: var(--gryffindor-red);
+            margin-bottom: 30px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border-bottom: 2px solid var(--ink);
+            padding-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            font-family: 'Cinzel Decorative', cursive;
+            color: var(--gryffindor-red);
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            background: rgba(255,255,255,0.3);
+            border: 2px dashed var(--ink);
+            border-radius: 4px;
+            font-family: 'Crimson Text', serif;
+            font-size: 18px;
+            padding: 10px;
+            color: var(--ink);
+            outline: none;
+            transition: background 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="password"]:focus {
+            background: rgba(255,255,255,0.6);
+            border-color: var(--gryffindor-red);
+        }
+
+        .magic-btn {
+            background: var(--gryffindor-red);
+            color: var(--gryffindor-gold);
+            border: 2px solid var(--gryffindor-gold);
+            padding: 12px 24px;
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .magic-btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,215,0,0.4), transparent);
+            transition: 0.5s;
+        }
+
+        .magic-btn:hover::after { left: 100%; }
+        .magic-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(116, 0, 1, 0.6); text-shadow: 0 0 8px gold; }
+
+        .hogwarts-crest {
+            width: 80px; height: 80px;
+            background: var(--gryffindor-red);
+            clip-path: polygon(50% 0, 100% 20%, 100% 80%, 50% 100%, 0 80%, 0 20%);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gryffindor-gold);
+            font-size: 40px;
+            font-family: 'Cinzel Decorative', cursive;
+            border: 2px solid var(--gryffindor-gold);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            margin: 0 auto 20px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="hogwarts-crest">H</div>
+        <h1 class="login-title">Wizard Login</h1>
+        
+        <form onsubmit="event.preventDefault(); localStorage.setItem('wizardName', document.getElementById('name').value); window.location.href='bug-test.old.html';">
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" placeholder="Enter your name" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="college">College Name</label>
+                <input type="text" id="college" name="college" placeholder="" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="" required>
+            </div>
+            
+            <button type="submit" class="magic-btn">Enter</button>
+        </form>
+    </div>
+</body>
+</html>
